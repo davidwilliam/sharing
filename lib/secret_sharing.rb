@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 require_relative "secret_sharing/version"
+require 'hensel_code'
 
 module SecretSharing
   class Error < StandardError; end
-  # Your code goes here...
+  
+  autoload  :CRT, "secret_sharing/crt"
 end
