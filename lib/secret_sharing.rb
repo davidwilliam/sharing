@@ -7,5 +7,5 @@ require "hensel_code"
 module SecretSharing
   class Error < StandardError; end
 
-  autoload :CRTAsmuthBloomV1, "secret_sharing/crt_asmuth_bloom_v1"
+  autoload :CRTAsmuthBloomV2, "secret_sharing/crt_asmuth_bloom_v2"
 end

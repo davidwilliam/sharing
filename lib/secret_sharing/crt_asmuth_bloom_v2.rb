@@ -4,7 +4,7 @@
 module SecretSharing
   # class for second version of CRT-based secret sharing scheme
   # by Asmuth-Bloom
-  class CRTAsmuthBloomV1
+  class CRTAsmuthBloomV2
     include HenselCode::Tools
 
     attr_accessor :threshold, :secrecy, :total_shares, :primes,
