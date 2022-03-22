@@ -11,7 +11,7 @@ gem "minitest", "~> 5.0"
 
 gem "rubocop", "~> 1.21"
 
-gem "hensel_code", "~> 0.2.1"
+gem "hensel_code", "~> 0.3.0"
 
 gem "rubocop-minitest", "~> 0.17.2"
 
