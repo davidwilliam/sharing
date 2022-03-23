@@ -8,11 +8,17 @@ require 'hensel_code'
 module SecretSharing
   class Error < StandardError; end
 
-  autoload :CRTAsmuthBloomV2, "secret_sharing/crt_asmuth_bloom_v2"
+  # autoload :CRTAsmuthBloomV2, "secret_sharing/crt_asmuth_bloom_v2"
 
   module Polynomial
     module Shamir
       autoload :V1, "secret_sharing/polynomial/shamir/v1"
+    end
+  end
+
+  module CRT
+    module AsmuthBloom
+      autoload :V2, "secret_sharing/crt/asmuth-bloom/v2"
     end
   end
 end
