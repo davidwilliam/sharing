@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'prime'
-require_relative 'secret_sharing/version'
-require 'hensel_code'
+require "prime"
+require_relative "secret_sharing/version"
+require "hensel_code"
 
 # module secret sharing
 module SecretSharing
@@ -10,7 +10,9 @@ module SecretSharing
 
   # autoload :CRTAsmuthBloomV2, "secret_sharing/crt_asmuth_bloom_v2"
 
+  # module for polynomial-based features
   module Polynomial
+    autoload :Tools, "secret_sharing/polynomial/tools"
     module Shamir
       autoload :V1, "secret_sharing/polynomial/shamir/v1"
     end

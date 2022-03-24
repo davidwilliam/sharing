@@ -4,7 +4,7 @@ require "test_helper"
 
 class TestPolynomialShamirV1 < Minitest::Test
   def setup
-    @params = {lambda_: 32, total_shares: 5, threshold: 3}
+    @params = { lambda_: 32, total_shares: 5, threshold: 3 }
     @sss = SecretSharing::Polynomial::Shamir::V1.new @params
   end
 
@@ -16,29 +16,29 @@ class TestPolynomialShamirV1 < Minitest::Test
   end
 
   def test_generate_random_coefficients
-    random_coefficients = @sss.send(:generate_random_coefficients)
+    random_coefficients = SecretSharing::Polynomial::Shamir::V1.generate_random_coefficients(@sss.total_shares,
+                                                                                             @sss.lambda_)
 
     assert_equal @params[:total_shares] - 1, random_coefficients.size
   end
 
   def test_polynomial_function_f
-    cs = [2,21,23,32]
+    cs = [2, 21, 23, 32]
     secret = 19
-    x1 = 1
-    x2 = 2
-    expected_polynomial_evaluation1 = secret + cs[0]*x1 + cs[1]*x1**2 + cs[2]*x1**3 + cs[3]*x1**4
-    expected_polynomial_evaluation2 = secret + cs[0]*x2 + cs[1]*x2**2 + cs[2]*x2**3 + cs[3]*x2**4
+    [1].each do |x|
+      expected_polynomial_evaluation = secret + (0..3).map { |i| (cs[i] * (x**(i + 1))) }.sum
 
-    assert_equal expected_polynomial_evaluation1, @sss.send(:f, x1, secret, cs)
-    assert_equal expected_polynomial_evaluation2, @sss.send(:f, x2, secret, cs)
+      assert_equal expected_polynomial_evaluation, @sss.send(:f, x, secret, cs)
+    end
   end
 
   def test_lagrande_basis_polynomial
     @sss.p = 373
     points = [[3, 151], [1, 67], [2, 240]]
-    expected_l0s = [1, 3, -3]  
-    
-    assert_equal expected_l0s, @sss.lagrange_basis_polynomial(points)
+    xs = points.map(&:first)
+    expected_l0s = [1, 3, -3]
+
+    assert_equal expected_l0s, @sss.lagrange_basis_polynomial(xs)
   end
 
   def test_secret_reconstruction
@@ -50,27 +50,88 @@ class TestPolynomialShamirV1 < Minitest::Test
   end
 
   def test_regular_setup
-    params = {lambda_: 32, total_shares: 5, threshold: 3}
+    params = { lambda_: 32, total_shares: 5, threshold: 3 }
     sss = SecretSharing::Polynomial::Shamir::V1.new params
 
     secret = 18
     shares = sss.create_shares(secret)
-    selected_shares = shares.sample(sss.threshold)
-    reconstructed_secret = sss.reconstruct_secret(shares)
+    selected_shares = shares.sample(sss.total_shares)
+    reconstructed_secret = sss.reconstruct_secret(selected_shares)
 
     assert_equal secret, reconstructed_secret
   end
 
   def test_larger_setup
-    params = {lambda_: 32, total_shares: 15, threshold: 10}
+    params = { lambda_: 32, total_shares: 20, threshold: 10 }
     sss = SecretSharing::Polynomial::Shamir::V1.new params
 
     secret = 18
     shares = sss.create_shares(secret)
-    selected_shares = shares.sample(sss.threshold)
-    reconstructed_secret = sss.reconstruct_secret(shares)
+    selected_shares = shares.sample(sss.total_shares)
+    reconstructed_secret = sss.reconstruct_secret(selected_shares)
 
     assert_equal secret, reconstructed_secret
   end
 
+  def test_addition
+    params = { lambda_: 32, total_shares: 5, threshold: 5 }
+    sss = SecretSharing::Polynomial::Shamir::V1.new params
+
+    secret1 = 18
+    secret2 = 23
+
+    shares1 = sss.create_shares(secret1)
+    shares2 = sss.create_shares(secret2)
+
+    shares1_add_shares2 = SecretSharing::Polynomial::Shamir::V1.add(shares1, shares2, sss.p)
+    selected_shares1_add_shares2 = shares1_add_shares2.sample(sss.threshold)
+
+    assert_equal secret1 + secret2, sss.reconstruct_secret(selected_shares1_add_shares2)
+  end
+
+  def test_subtraction
+    params = { lambda_: 32, total_shares: 5, threshold: 5 }
+    sss = SecretSharing::Polynomial::Shamir::V1.new params
+
+    secret1 = 23
+    secret2 = 18
+
+    shares1 = sss.create_shares(secret1)
+    shares2 = sss.create_shares(secret2)
+
+    shares1_sub_shares2 = SecretSharing::Polynomial::Shamir::V1.sub(shares1, shares2, sss.p)
+    selected_shares1_sub_shares2 = shares1_sub_shares2.sample(sss.threshold)
+
+    assert_equal secret1 - secret2, sss.reconstruct_secret(selected_shares1_sub_shares2)
+  end
+
+  def test_scalar_multiplication
+    params = { lambda_: 32, total_shares: 5, threshold: 5 }
+    sss = SecretSharing::Polynomial::Shamir::V1.new params
+
+    secret = 19
+    scalar = 12
+
+    shares = sss.create_shares(secret)
+
+    shares_smul_scalar = SecretSharing::Polynomial::Shamir::V1.smul(shares, scalar, sss.p)
+    selected_shares_smul_scalar = shares_smul_scalar.sample(sss.threshold)
+
+    assert_equal secret * scalar, sss.reconstruct_secret(selected_shares_smul_scalar)
+  end
+
+  def test_scalar_division
+    params = { lambda_: 32, total_shares: 5, threshold: 5 }
+    sss = SecretSharing::Polynomial::Shamir::V1.new params
+
+    secret = 80
+    scalar = 4
+
+    shares = sss.create_shares(secret)
+
+    shares_sdiv_scalar = SecretSharing::Polynomial::Shamir::V1.sdiv(shares, scalar, sss.p)
+    selected_shares_sdiv_scalar = shares_sdiv_scalar.sample(sss.threshold)
+
+    assert_equal secret / scalar, sss.reconstruct_secret(selected_shares_sdiv_scalar)
+  end
 end
