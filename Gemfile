@@ -5,6 +5,10 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in secret_sharing.gemspec
 gemspec
 
+gem "hensel_code", "~> 0.3.0"
+
+gem "prime", "~> 0.1.2"
+
 gem "rake", "~> 13.0"
 
 gem "minitest", "~> 5.0"
