@@ -17,12 +17,157 @@ And then execute:
 Or install it yourself as:
 
     $ gem install secret_sharing
+    
+# Supported Secret Sharing Schemes
 
-## Usage
+Secret Sharing currently supports two schemes:
 
-The Secret Sharing gem currently supports one algorithm: the sencod modified version (proposed by Ersoy et al. in in [Homomorphic extensions of CRT-based secret sharing](https://www.sciencedirect.com/science/article/pii/S0166218X20303012)) of the CRT-based secret sharing scheme introduced by Asmuth-Bloom in [A modular approach to key safeguarding](https://ieeexplore.ieee.org/abstract/document/1056651).
+- A first version of the Shamir's secret sharing
+- The second of two modified versions of the CRT-based Asmuth-Bloom scheme proposed by Ersoy et al.
 
-We have currently the class `CRTAsmuthBloomV2`. To initialize it, we need to pass the following parameters:
+# Usage
+
+## Shamir's Secret Sharing V1
+
+The Shamir's secret sharing v1 scheme is based on the work of Adi Shamir in [How to Share a Secret](https://web.mit.edu/6.857/OldStuff/Fall03/ref/Shamir-HowToShareASecret.pdf).
+
+### n-out-of-n Shamir Secret Sharing
+
+Let's consider the followin setup:
+
+```ruby
+secret1 = 22
+secret2 = 36
+scalar = 2
+params = {total_shares: 5, threshold: 5, lambda_: 16}
+sss = SecretSharing::Polynomial::Shamir::V1.new params
+# => #<SecretSharing::Polynomial::Shamir::V1:0x0000000114090618 @lambda_=16, @p=63719, @threshold=3, @total_shares=5>
+```
+
+We generate shares as follows:
+
+```ruby
+shares1 = sss.create_shares(secret1)
+# => [[1, 17038], [2, 51463], [3, 24539], [4, 33770], [5, 34327]]
+shares2 = sss.create_shares(secret2)
+# => [[1, 26584], [2, 37554], [3, 53948], [4, 45589], [5, 58559]]
+scalar = 2
+```
+
+We reconstruct the secrets as follows:
+
+```ruby
+reconstructed_secret1 = sss.reconstruct_secret(shares1)
+# => (22/1)
+reconstructed_secret2 = sss.reconstruct_secret(shares2)
+# => (36/1)
+```
+
+We can compute linear functions without requiring communication between the share holders: 
+
+```ruby
+shares1_add_shares2 = SecretSharing::Polynomial::Shamir::V1.add(shares1, shares2, sss.p)
+# => [[1, 43622], [2, 25298], [3, 14768], [4, 15640], [5, 29167]]
+shares2_sub_shares1 = SecretSharing::Polynomial::Shamir::V1.sub(shares2, shares1, sss.p)
+# => [[1, 9546], [2, 49810], [3, 29409], [4, 11819], [5, 24232]]
+shares1_smul_scalar = SecretSharing::Polynomial::Shamir::V1.smul(shares1, scalar, sss.p)
+# => [[1, 34076], [2, 39207], [3, 49078], [4, 3821], [5, 4935]]
+shares1_sdiv_scalar = SecretSharing::Polynomial::Shamir::V1.sdiv(shares1, scalar, sss.p)
+# => [[1, 8519], [2, 57591], [3, 44129], [4, 16885], [5, 49023]]
+```
+
+and we can check that:
+
+```ruby
+sss.reconstruct_secret(shares1_add_shares2)
+# => (58/1)
+sss.reconstruct_secret(shares2_sub_shares1)
+# => (14/1)
+sss.reconstruct_secret(shares1_smul_scalar)
+# => (44/1)
+sss.reconstruct_secret(shares1_sdiv_scalar)
+# => (11/1)
+```
+
+### Using Hensel Codes
+
+As most (if not all) of secret sharing schemes over finite fields `F_p` for `p > 2`, the secret inputs are naturally required to be positive integers in `F_p`. In this way, if we compute subtraction and we end up with a result that is negative, the reconstruction will fail (provided we don't have any econding in place). Same will occur if we compute a scalar division involving a scalar that is not a divisor of the corresponding secret. For addressing this and many other arithmetic problems, we can use Hensel codes to allow secret inputs to be positive and negative rational numbers.
+
+```ruby
+rational_secret1 = Rational(2,3)
+# => 2/3
+rational_secret2 = Rational(-5,7)
+# => -5/7
+scalar = 5
+# => 5
+params = {total_shares: 5, threshold: 5, lambda_: 32}
+# => {:total_shares=>5, :threshold=>5, :lambda_=>32}
+sss = SecretSharing::Polynomial::Shamir::V1.new params
+# => #<SecretSharing::Polynomial::Shamir::V1:0x0000000103065cd0 @lambda_=32, @total_shares=5, @threshold=5, @p=4151995223>
+```
+
+We compute the Hensel codes for the secrets:
+
+```ruby
+secret1 = HenselCode::TruncatedFinitePadicExpansion.new(sss.p, 1, rational_secret1).hensel_code
+# => 2767996816
+secret2 = HenselCode::TruncatedFinitePadicExpansion.new(sss.p, 1, rational_secret2).hensel_code
+# => 593142174
+```
+
+Then, we create the shares:
+
+```ruby
+shares1 = sss.create_shares(secret1)
+# => [[1, 1788895381], [2, 1795799163], [3, 3852643947], [4, 58410522], [5, 2611091242]]
+shares2 = sss.create_shares(secret2)
+# => [[1, 2523224758], [2, 2966680092], [3, 3722500411], [4, 3217222534], [5, 656923087]]
+```
+
+Now we can compute all the available linear computations as before:
+
+```ruby
+shares1_add_shares2 = SecretSharing::Polynomial::Shamir::V1.add(shares1, shares2, sss.p)
+# => [[1, 160124916], [2, 610484032], [3, 3423149135], [4, 3275633056], [5, 3268014329]]
+shares1_sub_shares2 = SecretSharing::Polynomial::Shamir::V1.sub(shares1, shares2, sss.p)
+# => [[1, 3417665846], [2, 2981114294], [3, 130143536], [4, 993183211], [5, 1954168155]]
+shares1_smul_scalar = SecretSharing::Polynomial::Shamir::V1.smul(shares1, scalar, sss.p)
+# => [[1, 640486459], [2, 675005369], [3, 2655238843], [4, 292052610], [5, 599470541]]
+shares1_sdiv_scalar = SecretSharing::Polynomial::Shamir::V1.sdiv(shares1, scalar, sss.p)
+# => [[1, 2848976210], [2, 3680756011], [3, 1600927834], [4, 842081149], [5, 1352617293]]
+```
+
+We reconstruct the secrets:
+
+```ruby
+reconstruct_secret1_add_secret2 = sss.reconstruct_secret(shares1_add_shares2)
+# => 3361138990/1
+reconstruct_secret1_sub_secret2 = sss.reconstruct_secret(shares1_sub_shares2)
+# => 2174854642/1
+reconstruct_shares1_smul_scalar = sss.reconstruct_secret(shares1_smul_scalar)
+# => 1383998411/1
+reconstruct_shares1_sdiv_scalar = sss.reconstruct_secret(shares1_sdiv_scalar)
+# => 3044796497/1
+```
+
+and we can check that:
+
+```ruby
+HenselCode::TruncatedFinitePadicExpansion.new(sss.p, 1, reconstructed_secret1_add_secret2).to_r
+# => -1/21
+HenselCode::TruncatedFinitePadicExpansion.new(sss.p, 1, reconstructed_secret1_sub_secret2).to_r
+# => 29/21
+HenselCode::TruncatedFinitePadicExpansion.new(sss.p, 1, reconstructed_shares1_smul_scalar).to_r
+# => 10/3
+HenselCode::TruncatedFinitePadicExpansion.new(sss.p, 1, reconstructed_shares1_sdiv_scalar).to_r
+# => 2/15
+```
+
+## Asmuth-Bloom V2
+
+The Asmuth-Bloom V2 was proposed by Ersoy et al. in in [Homomorphic extensions of CRT-based secret sharing](https://www.sciencedirect.com/science/article/pii/S0166218X20303012)). The reference is a CRT-based secret sharing scheme introduced by Asmuth-Bloom in [A modular approach to key safeguarding](https://ieeexplore.ieee.org/abstract/document/1056651).
+
+We have currently the class `SecretSharing::CRT::AsmuthBloom::V2`. To initialize it, we need to pass the following parameters:
 
 - `lambda_`: the bit length of the secret prime moduli.
 - `threshold`: the recovery threshold in which it is guaranteed to recover the secret for all possible values.
