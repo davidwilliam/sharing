@@ -1,5 +1,7 @@
 # Sharing
 
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/davidwilliam/sharing/Ruby)
+
 Sharing is a Ruby gem with implmementations of secret sharing schemes with homomorphic properties. Although secret sharing schemes and multiparty computation protocols are distinct notions, multiparty computation protocols are typically enabled by secret sharing schemes. In this setting, security comes from the use of multiple parties. If they collude, all security is lost, but satisfactory levels of security can be established by trusting a subset of them will not to collude. In many settings where corrupting security requires corrupting all the parties, and considering you are one of the computing parties, security  is guaranteed if you are one of the parties.
 
 Computing linear functions is trivial. Each non-linear operation however requires interaction between the parties/extra steps (for most secret sharing schemes).
