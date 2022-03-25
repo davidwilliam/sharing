@@ -3,7 +3,7 @@
 require "test_helper"
 
 class TestPolynomialShamirV1 < Minitest::Test
-  def setup
+  def before
     @params = { lambda_: 16, total_shares: 6, threshold: 3 }
     @sss = Sharing::Polynomial::Shamir::V1.new @params
   end
