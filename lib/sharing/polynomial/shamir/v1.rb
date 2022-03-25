@@ -28,20 +28,36 @@ module Sharing
           shares.map { |s| [s[0], (s[1] * mod_inverse(scalar, prime)) % prime] }
         end
 
-        def self.mul_first_round(shares1, shares2, total_shares, threshold, lambda_, prime)
+        def self.mul_first_round(shares, total_shares, threshold, lambda_, prime)
+          shares1, shares2 = shares
           xs = shares1.map(&:first)
           shares1.zip(shares2).map.with_index do |s, i|
-            beta = lagrange_basis_polynomial_inner_loop(i, xs)
-            share = (s[0][1] * s[1][1] * beta) % prime
-            shares = create_shares(share, total_shares, threshold, lambda_, prime)
-            shares = shares.map{|s| [s[0], (s[1].numerator * mod_inverse(s[1].denominator, prime)) % prime]}
-            [s[0][0], shares]
+            share = prepare_share_for_multiplication(i, xs, prime, s)
+            reshares = create_shares(share, total_shares, threshold, lambda_, prime)
+            encode_reshares(reshares, prime, s)
           end
         end
 
+        def self.encode_reshares(reshares, prime, s_pair)
+          reshares_encoded = reshares.map do |ss|
+            [ss[0], (ss[1].numerator * mod_inverse(ss[1].denominator, prime)) % prime]
+          end
+          [s_pair[0][0], reshares_encoded]
+        end
+
+        def self.prepare_share_for_multiplication(index, xs_, prime, s_pair)
+          beta = lagrange_basis_polynomial_inner_loop(index, xs_)
+          (s_pair[0][1] * s_pair[1][1] * beta) % prime
+        end
+
         def self.mul_second_round(mul_round1)
-          multiplication_shares = mul_round1.map(&:last).map{|m| m.map(&:last)}.transpose.map(&:sum)
-          multiplication_shares.map.with_index{|m,i| [i + 1, m] }
+          multiplication_shares = mul_round1.map(&:last).map { |m| m.map(&:last) }.transpose.map(&:sum)
+          multiplication_shares.map.with_index { |m, i| [i + 1, m] }
+        end
+
+        def self.select_mul_shares(total_shares, threshold, shares)
+          indices = (0..total_shares - 1).to_a.sample((2 * threshold) - 1)
+          shares.map { |shares_| shares_.values_at(*indices) }
         end
 
         def self.generate_random_coefficients(total_shares, lambda_)
@@ -58,6 +74,10 @@ module Sharing
           @total_shares = params[:total_shares]
           @threshold = params[:threshold]
           generate_prime
+        end
+
+        def params
+          [lambda_, p, total_shares, threshold]
         end
 
         def create_shares(secret)
