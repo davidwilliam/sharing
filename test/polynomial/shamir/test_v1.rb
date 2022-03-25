@@ -17,7 +17,7 @@ class TestPolynomialShamirV1 < Minitest::Test
 
   def test_generate_random_coefficients
     random_coefficients = Sharing::Polynomial::Shamir::V1.generate_random_coefficients(@sss.total_shares,
-                                                                                             @sss.lambda_)
+                                                                                       @sss.lambda_)
 
     assert_equal @params[:total_shares] - 1, random_coefficients.size
   end
