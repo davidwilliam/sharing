@@ -1,6 +1,8 @@
 # Sharing
 
-A secret sharing Ruby library.
+Sharing is a Ruby gem with implmementations of secret sharing schemes with homomorphic properties. Although secret sharing schemes and multiparty computation protocols are distinct notions, multiparty computation protocols are typically enabled by secret sharing schemes. In this setting, security comes from the use of multiple parties. If they collude, all security is lost, but satisfactory levels of security can be established by trusting a subset of them will not to collude. In many settings where corrupting security requires corrupting all the parties, and considering you are one of the computing parties, security  is guaranteed if you are one of the parties.
+
+Computing linear functions is trivial. Each non-linear operation however requires interaction between the parties/extra steps (for most secret sharing schemes).
 
 ## Installation
 
@@ -26,6 +28,13 @@ Secret Sharing currently supports two schemes:
 - The second of two modified versions of the CRT-based Asmuth-Bloom scheme proposed by Ersoy et al.
 
 # Usage
+
+In the examples below, there are two main levels of execution:
+
+- Computations performed by the owner of the secrets (those are computations using instance methods)
+- Computations performed over the secret shares (those are computations using class methods)
+
+This distiction is important since we are showing everything at once here, for completeness and for clarity. However it is important to keep in mind that after the secret shares are generated, the computations over the shares are intended to be computed independetly by each participant (party), each one with their corresponding shares.
 
 ## Shamir's Secret Sharing V1
 
@@ -58,9 +67,9 @@ We reconstruct the secrets as follows:
 
 ```ruby
 reconstructed_secret1 = sss.reconstruct_secret(shares1)
-# => (22/1)
+# => 22
 reconstructed_secret2 = sss.reconstruct_secret(shares2)
-# => (36/1)
+# => 36
 ```
 
 We can compute linear functions without requiring communication between the share holders: 
@@ -80,18 +89,18 @@ and we can check that:
 
 ```ruby
 sss.reconstruct_secret(shares1_add_shares2)
-# => (58/1)
+# => 58
 sss.reconstruct_secret(shares2_sub_shares1)
-# => (14/1)
+# => 14
 sss.reconstruct_secret(shares1_smul_scalar)
-# => (44/1)
+# => 44
 sss.reconstruct_secret(shares1_sdiv_scalar)
-# => (11/1)
+# => 11
 ```
 
 ### Using Hensel Codes
 
-The gem Secret Sharing takes advantage of the gem [Hensel Codes](https://github.com/davidwilliam/hensel_code) for homomorphically encoding rational numbers as integers in order to compute over the integers and yet obtain results over the rationals.
+The gem Secret Sharing takes advantage of the gem [Hensel Code](https://github.com/davidwilliam/hensel_code) for homomorphically encoding rational numbers as integers in order to compute over the integers and yet obtain results over the rationals.
 
 As most (if not all) of secret sharing schemes over finite fields `F_p` for `p > 2`, the secret inputs are naturally required to be positive integers in `F_p`. In this way, if we compute subtraction and we end up with a result that is negative, the reconstruction will fail (provided we don't have any econding in place). Same will occur if we compute a scalar division involving a scalar that is not a divisor of the corresponding secret. For addressing this and many other arithmetic problems, we can use Hensel codes to allow secret inputs to be positive and negative rational numbers.
 
@@ -143,13 +152,13 @@ We reconstruct the secrets:
 
 ```ruby
 reconstruct_secret1_add_secret2 = sss.reconstruct_secret(shares1_add_shares2)
-# => 3361138990/1
+# => 3361138990
 reconstruct_secret1_sub_secret2 = sss.reconstruct_secret(shares1_sub_shares2)
-# => 2174854642/1
+# => 2174854642
 reconstruct_shares1_smul_scalar = sss.reconstruct_secret(shares1_smul_scalar)
-# => 1383998411/1
+# => 1383998411
 reconstruct_shares1_sdiv_scalar = sss.reconstruct_secret(shares1_sdiv_scalar)
-# => 3044796497/1
+# => 3044796497
 ```
 
 and we can check that:
@@ -163,6 +172,74 @@ HenselCode::TruncatedFinitePadicExpansion.new(sss.p, 1, reconstructed_shares1_sm
 # => 10/3
 HenselCode::TruncatedFinitePadicExpansion.new(sss.p, 1, reconstructed_shares1_sdiv_scalar).to_r
 # => 2/15
+```
+
+### Multiplication
+
+As we previously saw, linear functions are easy to compute with shares created by an instance of Shamir's secret sharing scheme. Non-linear functions need some strategy that require extra steps in other to successfuly achieve the desired results. We implement multiplication in the context of Shamir's secret sharing scheme following the approach discussed by Dan Bognadov in [Foundations and properties of Shamir's secret sharing scheme - Research Seminar in Cryptography](https://uuslepo.it.da.ut.ee/~peeter_l/teaching/seminar07k/bogdanov.pdf).
+
+We define an instance of Shamir's secret sharing scheme with the following parameters:
+
+```ruby
+params = { lambda_: 16, total_shares: 6, threshold: 3 }
+# => {:lambda_=>16, :total_shares=>6, :threshold=>3}
+sss = Sharing::Polynomial::Shamir::V1.new params
+# => #<Sharing::Polynomial::Shamir::V1:0x0000000105423640 @lambda_=16, @p=49367, @threshold=3, @total_shares=6>
+```
+
+As before, we define the secrets and create shares for them:
+
+```ruby
+secret1 = 13
+secret2 = 28
+shares1 = sss.create_shares(secret1)
+# => [[1, 43064], [2, 20333], [3, 30554], [4, 24360], [5, 1751], [6, 12094]]
+shares2 = sss.create_shares(secret2)
+# => [[1, 7983], [2, 18517], [3, 31630], [4, 47322], [5, 16226], [6, 37076]]
+``` 
+
+We combine both shares on a single array in preparation for the multiplication steps:
+
+```ruby
+operands_shares = [shares1, shares2]
+# => [[[1, 43064], [2, 20333], [3, 30554], [4, 24360], [5, 1751], [6, 12094]], [[1, 7983], [2, 18517], [3, 31630], [4, 47322], [5, 16226], [6, 37076]]]
+```
+
+Recall we are working with a t-out-of-n secret sharing scheme and this is actually required in this setting. We have a total of `n = 6` shares and threshold `t = 3`. In order to correctly recover the result of the multiplication over shares, we need to select any combination of `2 * t - 1` shares out of the total number of shares:
+
+```ruby
+selected_shares = Sharing::Polynomial::Shamir::V1.select_mul_shares(sss.total_shares, sss.threshold, operands_shares)
+# => => [[[2, 20333], [1, 43064], [5, 1751], [3, 30554], [4, 24360]], [[2, 18517], [1, 7983], [5, 16226], [3, 31630], [4, 47322]]]
+```
+
+Now we have everything we need to compute multiplication over the secret shares, which we do in two rounds. First round:
+
+```ruby
+mul_round1 = Sharing::Polynomial::Shamir::V1.mul_first_round(selected_shares, sss.total_shares, sss.threshold, sss.lambda_, sss.p)
+# => [[2, [[1, 25284], [2, 5881], [3, 2537], [4, 15252], [5, 44026], [6, 39492]]], [1, [[1, 36061], [2, 17299], [3, 32435], [4, 32102], [5, 16300], [6, 34396]]], [5, [[1, 30221], [2, 32724], [3, 33210], [4, 31679], [5, 28131], [6, 22566]]], [3, [[1, 46172], [2, 33017], [3, 8081], [4, 20731], [5, 21600], [6, 10688]]], [4, [[1, 12410], [2, 39133], [3, 5920], [4, 11505], [5, 6521], [6, 40335]]]]
+```
+
+Then we perform the second round:
+
+```ruby
+mul_round2 = Sharing::Polynomial::Shamir::V1.mul_second_round(mul_round1)
+# => [[1, 150148], [2, 128054], [3, 82183], [4, 111269], [5, 116578], [6, 147477]]
+```
+
+Then we only need a number equal to the threshold to reconstruct the result of the multipliction over the shares:
+
+```ruby
+selected_multiplication_shares = mul_round2.sample(sss.threshold)
+# => [[6, 147477], [2, 128054], [1, 150148]
+sss.reconstruct_secret(selected_multiplication_shares)
+# => 364
+```
+
+and we can check that
+
+```ruby
+secret1 * secret2
+# => 364
 ```
 
 ### t-out-of-n Secret Sharing
