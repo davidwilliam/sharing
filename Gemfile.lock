@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sharing (0.1.0)
+    sharing (0.1.1)
       hensel_code (~> 0.3.1)
       prime (~> 0.1.2)
 
