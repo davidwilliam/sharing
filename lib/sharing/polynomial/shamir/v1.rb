@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module SecretSharing
+module Sharing
   module Polynomial
     module Shamir
       # first supported version of Shamir secret sharing scheme

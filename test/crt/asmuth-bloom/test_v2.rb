@@ -6,7 +6,7 @@ class TestCRTAsmuthBloomV2 < Minitest::Test
   def setup
     @params = { lambda_: 64, threshold: 10, secrecy: 3, total_shares: 13, k_add: 5000, k_mul: 2 }
 
-    @crt = SecretSharing::CRT::AsmuthBloom::V2.new @params
+    @crt = Sharing::CRT::AsmuthBloom::V2.new @params
 
     @shares1 = @crt.compute_shares(5)
     @shares2 = @crt.compute_shares(8)
@@ -51,7 +51,7 @@ class TestCRTAsmuthBloomV2 < Minitest::Test
   end
 
   def test_addition
-    addition_shares = SecretSharing::CRT::AsmuthBloom::V2.add(@shares1, @shares2)
+    addition_shares = Sharing::CRT::AsmuthBloom::V2.add(@shares1, @shares2)
 
     selected_shares_add = addition_shares.sample(@crt.threshold)
 
@@ -59,7 +59,7 @@ class TestCRTAsmuthBloomV2 < Minitest::Test
   end
 
   def test_multiplication
-    multiplication_shares = SecretSharing::CRT::AsmuthBloom::V2.mul(@shares1, @shares2)
+    multiplication_shares = Sharing::CRT::AsmuthBloom::V2.mul(@shares1, @shares2)
 
     selected_shares_mul = multiplication_shares.sample(@crt.threshold)
 
@@ -67,8 +67,8 @@ class TestCRTAsmuthBloomV2 < Minitest::Test
   end
 
   def test_addition_depth
-    addition_shares_one = SecretSharing::CRT::AsmuthBloom::V2.add(@shares1, @shares2)
-    addition_shares_two = SecretSharing::CRT::AsmuthBloom::V2.add(addition_shares_one, @shares3)
+    addition_shares_one = Sharing::CRT::AsmuthBloom::V2.add(@shares1, @shares2)
+    addition_shares_two = Sharing::CRT::AsmuthBloom::V2.add(addition_shares_one, @shares3)
 
     selected_shares_add = addition_shares_two.sample(@crt.threshold)
 
@@ -76,8 +76,8 @@ class TestCRTAsmuthBloomV2 < Minitest::Test
   end
 
   def test_multiplication_depth
-    multiplication_shares_one = SecretSharing::CRT::AsmuthBloom::V2.mul(@shares1, @shares2)
-    multiplication_shares_two = SecretSharing::CRT::AsmuthBloom::V2.mul(multiplication_shares_one, @shares3)
+    multiplication_shares_one = Sharing::CRT::AsmuthBloom::V2.mul(@shares1, @shares2)
+    multiplication_shares_two = Sharing::CRT::AsmuthBloom::V2.mul(multiplication_shares_one, @shares3)
 
     selected_shares_mul = multiplication_shares_two.sample(@crt.threshold)
 

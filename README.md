@@ -7,7 +7,7 @@ A secret sharing Ruby library.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'secret_sharing'
+gem 'sharing'
 ```
 
 And then execute:
@@ -16,7 +16,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install secret_sharing
+    $ gem install sharing
     
 # Supported Secret Sharing Schemes
 
@@ -40,8 +40,8 @@ secret1 = 22
 secret2 = 36
 scalar = 2
 params = {total_shares: 5, threshold: 5, lambda_: 16}
-sss = SecretSharing::Polynomial::Shamir::V1.new params
-# => #<SecretSharing::Polynomial::Shamir::V1:0x0000000114090618 @lambda_=16, @p=63719, @threshold=3, @total_shares=5>
+sss = Sharing::Polynomial::Shamir::V1.new params
+# => #<Sharing::Polynomial::Shamir::V1:0x0000000114090618 @lambda_=16, @p=63719, @threshold=3, @total_shares=5>
 ```
 
 We generate shares as follows:
@@ -66,13 +66,13 @@ reconstructed_secret2 = sss.reconstruct_secret(shares2)
 We can compute linear functions without requiring communication between the share holders: 
 
 ```ruby
-shares1_add_shares2 = SecretSharing::Polynomial::Shamir::V1.add(shares1, shares2, sss.p)
+shares1_add_shares2 = Sharing::Polynomial::Shamir::V1.add(shares1, shares2, sss.p)
 # => [[1, 43622], [2, 25298], [3, 14768], [4, 15640], [5, 29167]]
-shares2_sub_shares1 = SecretSharing::Polynomial::Shamir::V1.sub(shares2, shares1, sss.p)
+shares2_sub_shares1 = Sharing::Polynomial::Shamir::V1.sub(shares2, shares1, sss.p)
 # => [[1, 9546], [2, 49810], [3, 29409], [4, 11819], [5, 24232]]
-shares1_smul_scalar = SecretSharing::Polynomial::Shamir::V1.smul(shares1, scalar, sss.p)
+shares1_smul_scalar = Sharing::Polynomial::Shamir::V1.smul(shares1, scalar, sss.p)
 # => [[1, 34076], [2, 39207], [3, 49078], [4, 3821], [5, 4935]]
-shares1_sdiv_scalar = SecretSharing::Polynomial::Shamir::V1.sdiv(shares1, scalar, sss.p)
+shares1_sdiv_scalar = Sharing::Polynomial::Shamir::V1.sdiv(shares1, scalar, sss.p)
 # => [[1, 8519], [2, 57591], [3, 44129], [4, 16885], [5, 49023]]
 ```
 
@@ -104,8 +104,8 @@ scalar = 5
 # => 5
 params = {total_shares: 5, threshold: 5, lambda_: 32}
 # => {:total_shares=>5, :threshold=>5, :lambda_=>32}
-sss = SecretSharing::Polynomial::Shamir::V1.new params
-# => #<SecretSharing::Polynomial::Shamir::V1:0x0000000103065cd0 @lambda_=32, @total_shares=5, @threshold=5, @p=4151995223>
+sss = Sharing::Polynomial::Shamir::V1.new params
+# => #<Sharing::Polynomial::Shamir::V1:0x0000000103065cd0 @lambda_=32, @total_shares=5, @threshold=5, @p=4151995223>
 ```
 
 We compute the Hensel codes for the secrets:
@@ -129,13 +129,13 @@ shares2 = sss.create_shares(secret2)
 Now we can compute all the available linear computations as before:
 
 ```ruby
-shares1_add_shares2 = SecretSharing::Polynomial::Shamir::V1.add(shares1, shares2, sss.p)
+shares1_add_shares2 = Sharing::Polynomial::Shamir::V1.add(shares1, shares2, sss.p)
 # => [[1, 160124916], [2, 610484032], [3, 3423149135], [4, 3275633056], [5, 3268014329]]
-shares1_sub_shares2 = SecretSharing::Polynomial::Shamir::V1.sub(shares1, shares2, sss.p)
+shares1_sub_shares2 = Sharing::Polynomial::Shamir::V1.sub(shares1, shares2, sss.p)
 # => [[1, 3417665846], [2, 2981114294], [3, 130143536], [4, 993183211], [5, 1954168155]]
-shares1_smul_scalar = SecretSharing::Polynomial::Shamir::V1.smul(shares1, scalar, sss.p)
+shares1_smul_scalar = Sharing::Polynomial::Shamir::V1.smul(shares1, scalar, sss.p)
 # => [[1, 640486459], [2, 675005369], [3, 2655238843], [4, 292052610], [5, 599470541]]
-shares1_sdiv_scalar = SecretSharing::Polynomial::Shamir::V1.sdiv(shares1, scalar, sss.p)
+shares1_sdiv_scalar = Sharing::Polynomial::Shamir::V1.sdiv(shares1, scalar, sss.p)
 # => [[1, 2848976210], [2, 3680756011], [3, 1600927834], [4, 842081149], [5, 1352617293]]
 ```
 
@@ -169,7 +169,7 @@ HenselCode::TruncatedFinitePadicExpansion.new(sss.p, 1, reconstructed_shares1_sd
 
 The Asmuth-Bloom V2 was proposed by Ersoy et al. in in [Homomorphic extensions of CRT-based secret sharing](https://www.sciencedirect.com/science/article/pii/S0166218X20303012)). The reference is a CRT-based secret sharing scheme introduced by Asmuth-Bloom in [A modular approach to key safeguarding](https://ieeexplore.ieee.org/abstract/document/1056651).
 
-We have currently the class `SecretSharing::CRT::AsmuthBloom::V2`. To initialize it, we need to pass the following parameters:
+We have currently the class `Sharing::CRT::AsmuthBloom::V2`. To initialize it, we need to pass the following parameters:
 
 - `lambda_`: the bit length of the secret prime moduli.
 - `threshold`: the recovery threshold in which it is guaranteed to recover the secret for all possible values.
@@ -180,7 +180,7 @@ We have currently the class `SecretSharing::CRT::AsmuthBloom::V2`. To initialize
 
 ```ruby
 params = { lambda_: 64, threshold: 10, secrecy: 3, total_shares: 13, k_add: 5000, k_mul: 2 }
-crtss = SecretSharing::CRTAsmuthBloomV2.new params
+crtss = Sharing::CRTAsmuthBloomV2.new params
 secret1 = 5
 secret2 = 8
 secret3 = 9
@@ -195,11 +195,11 @@ shares3 = crtss.compute_shares(secret3)
 With the shares created, we can compute basic arithmetic:
 
 ```ruby
-shares1_add_shares2 = SecretSharing::CRTAsmuthBloomV2.add(shares1, shares2)
+shares1_add_shares2 = Sharing::CRTAsmuthBloomV2.add(shares1, shares2)
 # => [[0, 6418829087325724345], [1, 18230278837032333477], [2, 7068266384623227505], [3, 15293720620960158934], [4, 19199012831569249778], [5, 15483597399837635755], [6, 6266411308942604630], [7, 10241553784641486961], [8, 16976663242980356442], [9, 8394138373314855770], [10, 21719643681547997591], [11, 21167048685996677361], [12, 26153472271685692810]]
-shares1_mul_shares2 = SecretSharing::CRTAsmuthBloomV2.mul(shares1, shares2)
+shares1_mul_shares2 = Sharing::CRTAsmuthBloomV2.mul(shares1, shares2)
 # => [[0, 9347235849580217942880423213680002950], [1, 80249717473471354529348429396269261950], [2, 12359584309342074742148630183422566186], [3, 16897825064318556900157377557090288245], [4, 90827153579571227732364682022273828397], [5, 59717474263879064686877969113378493916], [6, 9720588245128167152782160092717057321], [7, 23427613714160960605536958120927421074], [8, 64793545996747467446843059564467544485], [9, 16861648333327680706874620252941149125], [10, 106570412980118630776546521824476514058], [11, 106385528184186069985041673188764895180], [12, 170865885013928618679442811690919225624]]
-shares1_add_shares2_add_shares1_mul_shares2 = SecretSharing::CRTAsmuthBloomV2.add(shares1_add_shares2, shares1_mul_shares2)
+shares1_add_shares2_add_shares1_mul_shares2 = Sharing::CRTAsmuthBloomV2.add(shares1_add_shares2, shares1_mul_shares2)
 # => [[0, 9347235849580217949299252301005727295], [1, 80249717473471354547578708233301595427], [2, 12359584309342074749216896568045793691], [3, 16897825064318556915451098178050447179], [4, 90827153579571227751563694853843078175], [5, 59717474263879064702361566513216129671], [6, 9720588245128167159048571401659661951], [7, 23427613714160960615778511905568908035], [8, 64793545996747467463819722807447900927], [9, 16861648333327680715268758626256004895], [10, 106570412980118630798266165506024511649], [11, 106385528184186070006208721874761572541], [12, 170865885013928618705596283962604918434]]
 ```
 
@@ -235,7 +235,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/davidwilliam/secret_sharing.
+Bug reports and pull requests are welcome on GitHub at https://github.com/davidwilliam/sharing.
 
 ## License
 

@@ -7,7 +7,7 @@ require "codecov"
 SimpleCov.formatter = SimpleCov::Formatter::Codecov
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
-require "secret_sharing"
+require "sharing"
 
 require "minitest/autorun"
 require "minitest/reporters"

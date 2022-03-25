@@ -2,8 +2,8 @@
 
 require "test_helper"
 
-class TestSecretSharing < Minitest::Test
+class TestSharing < Minitest::Test
   def test_that_it_has_a_version_number
-    refute_nil ::SecretSharing::VERSION
+    refute_nil ::Sharing::VERSION
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # module secret sharing
-module SecretSharing
+module Sharing
   # crt-based secret sharing schemes
   module CRT
     # crt-based secret sharing scheme proposed by Asmuth-Bloom

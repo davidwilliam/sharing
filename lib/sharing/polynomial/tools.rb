@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module SecretSharing
+module Sharing
   module Polynomial
     # helper tool for computations with polynomials
     module Tools
