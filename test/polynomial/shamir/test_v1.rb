@@ -4,7 +4,7 @@ require "test_helper"
 
 class TestPolynomialShamirV1 < Minitest::Test
   def setup
-    @params = { lambda_: 32, total_shares: 5, threshold: 3 }
+    @params = { lambda_: 16, total_shares: 6, threshold: 3 }
     @sss = Sharing::Polynomial::Shamir::V1.new @params
   end
 
@@ -134,5 +134,20 @@ class TestPolynomialShamirV1 < Minitest::Test
     selected_shares_sdiv_scalar = shares_sdiv_scalar.sample(sss.threshold)
 
     assert_equal secret / scalar, sss.reconstruct_secret(selected_shares_sdiv_scalar)
+  end
+
+  def test_multiplication
+    secrets = [5, 8]
+    shares = secrets.map{|secret| @sss.create_shares(secret) }    
+
+    indices = (0..@sss.total_shares - 1).to_a.sample(2 * @sss.threshold - 1)
+    selected_shares = shares.map{|shares_| shares_.values_at(*indices) }
+
+    mul_round1 = Sharing::Polynomial::Shamir::V1.mul_first_round(selected_shares[0], selected_shares[1], @sss.total_shares, @sss.threshold, @sss.lambda_, @sss.p)
+    mul_round2 = Sharing::Polynomial::Shamir::V1.mul_second_round(mul_round1)
+
+    selected_multiplication_shares = mul_round2.sample(@sss.threshold)
+
+    assert_equal secrets.inject(:*), @sss.reconstruct_secret(selected_multiplication_shares)
   end
 end

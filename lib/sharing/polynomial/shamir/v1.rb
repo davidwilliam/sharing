@@ -28,12 +28,28 @@ module Sharing
           shares.map { |s| [s[0], (s[1] * mod_inverse(scalar, prime)) % prime] }
         end
 
+        def self.mul_first_round(shares1, shares2, total_shares, threshold, lambda_, prime)
+          xs = shares1.map(&:first)
+          shares1.zip(shares2).map.with_index do |s, i|
+            beta = lagrange_basis_polynomial_inner_loop(i, xs)
+            share = (s[0][1] * s[1][1] * beta) % prime
+            shares = create_shares(share, total_shares, threshold, lambda_, prime)
+            shares = shares.map{|s| [s[0], (s[1].numerator * mod_inverse(s[1].denominator, prime)) % prime]}
+            [s[0][0], shares]
+          end
+        end
+
+        def self.mul_second_round(mul_round1)
+          multiplication_shares = mul_round1.map(&:last).map{|m| m.map(&:last)}.transpose.map(&:sum)
+          multiplication_shares.map.with_index{|m,i| [i + 1, m] }
+        end
+
         def self.generate_random_coefficients(total_shares, lambda_)
           random_distinct_numbers("integer", total_shares - 1, lambda_ - 1)
         end
 
-        def self.create_shares(secret, total_shares, lambda_, prime)
-          random_coefficients = generate_random_coefficients(total_shares, lambda_)
+        def self.create_shares(secret, total_shares, threshold, lambda_, prime)
+          random_coefficients = generate_random_coefficients(threshold, lambda_)
           (1..total_shares).map.with_index { |x, i| [i + 1, f(x, secret, random_coefficients) % prime] }
         end
 
