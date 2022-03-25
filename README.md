@@ -91,6 +91,8 @@ sss.reconstruct_secret(shares1_sdiv_scalar)
 
 ### Using Hensel Codes
 
+The gem Secret Sharing takes advantage of the gem [Hensel Codes](https://github.com/davidwilliam/hensel_code) for homomorphically encoding rational numbers as integers in order to compute over the integers and yet obtain results over the rationals.
+
 As most (if not all) of secret sharing schemes over finite fields `F_p` for `p > 2`, the secret inputs are naturally required to be positive integers in `F_p`. In this way, if we compute subtraction and we end up with a result that is negative, the reconstruction will fail (provided we don't have any econding in place). Same will occur if we compute a scalar division involving a scalar that is not a divisor of the corresponding secret. For addressing this and many other arithmetic problems, we can use Hensel codes to allow secret inputs to be positive and negative rational numbers.
 
 ```ruby
