@@ -53,7 +53,8 @@ module Sharing
           xs = points.map(&:first)
           ys = points.map(&:last)
           l0s = lagrange_basis_polynomial(xs)
-          l0s.zip(ys).map { |l, y| l * y }.sum % p
+          reconstructed_secret = l0s.zip(ys).map { |l, y| l * y }.sum % p
+          encode_to_integer(reconstructed_secret)
         end
 
         private
@@ -63,7 +64,11 @@ module Sharing
         end
 
         def generate_random_coefficients
-          random_distinct_numbers("integer", total_shares - 1, lambda_ - 1)
+          random_distinct_numbers("integer", threshold - 1, lambda_ - 1)
+        end
+
+        def encode_to_integer(reconstructed_secret)
+          (reconstructed_secret.numerator * mod_inverse(reconstructed_secret.denominator, p)) % p
         end
       end
     end

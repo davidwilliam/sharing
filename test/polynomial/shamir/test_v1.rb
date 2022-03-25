@@ -50,24 +50,25 @@ class TestPolynomialShamirV1 < Minitest::Test
   end
 
   def test_regular_setup
-    params = { lambda_: 32, total_shares: 5, threshold: 3 }
+    params = { lambda_: 16, total_shares: 5, threshold: 3 }
     sss = Sharing::Polynomial::Shamir::V1.new params
 
     secret = 18
     shares = sss.create_shares(secret)
-    selected_shares = shares.sample(sss.total_shares)
+    selected_shares = shares.sample(sss.threshold)
     reconstructed_secret = sss.reconstruct_secret(selected_shares)
 
     assert_equal secret, reconstructed_secret
   end
 
   def test_larger_setup
-    params = { lambda_: 32, total_shares: 20, threshold: 10 }
+    params = { lambda_: 16, total_shares: 6, threshold: 3 }
     sss = Sharing::Polynomial::Shamir::V1.new params
 
-    secret = 18
+    secret = 19
     shares = sss.create_shares(secret)
-    selected_shares = shares.sample(sss.total_shares)
+
+    selected_shares = shares.sample(sss.threshold)
     reconstructed_secret = sss.reconstruct_secret(selected_shares)
 
     assert_equal secret, reconstructed_secret
