@@ -41,6 +41,11 @@ class TestCRTAsmuthBloomV2 < Minitest::Test
     assert expected_condition
   end
 
+  def test_generate_primes
+    @crt.generate_primes
+    assert_equal @crt.primes, @crt.primes.sort
+  end
+
   def test_create_shares
     secret = 8
     shares = @crt.compute_shares(secret)
