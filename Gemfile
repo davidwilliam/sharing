@@ -22,3 +22,5 @@ gem "minitest-reporters", "~> 1.5"
 gem "simplecov", "~>0.21", require: false
 
 gem "simplecov-console", "~>0.9", require: false
+
+gem "codecov", require: false, group: "test"

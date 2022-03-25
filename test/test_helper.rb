@@ -3,6 +3,7 @@
 if ENV["COVERAGE"] == "on"
   require "simplecov"
   require "simplecov-console"
+  require "codecov"
 
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
     [
