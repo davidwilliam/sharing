@@ -165,6 +165,26 @@ HenselCode::TruncatedFinitePadicExpansion.new(sss.p, 1, reconstructed_shares1_sd
 # => 2/15
 ```
 
+### t-out-of-n Secret Sharing
+
+Now we defined a threshold value that is less than the total number of shares:
+
+```ruby
+params = {total_shares: 5, threshold: 3, lambda_: 16}
+# => {:total_shares=>5, :threshold=>3, :lambda_=>16}
+sss = Sharing::Polynomial::Shamir::V1.new params
+# => #<Sharing::Polynomial::Shamir::V1:0x000000010b046e90 @lambda_=16, @p=61343, @threshold=3, @total_shares=5>
+secret = 25
+# => 25
+shares = sss.create_shares(secret)
+# => [[1, 54707], [2, 50401], [3, 48450], [4, 48854], [5, 51613]]
+selected_shares = shares.sample(3)
+reconstructed_secret = sss.reconstruct_secret(selected_shares)
+# => 25
+```
+
+Everything else works the sabe as before except the fact that only `3` shares are required to reconstruct the secret.
+
 ## Asmuth-Bloom V2
 
 The Asmuth-Bloom V2 was proposed by Ersoy et al. in in [Homomorphic extensions of CRT-based secret sharing](https://www.sciencedirect.com/science/article/pii/S0166218X20303012)). The reference is a CRT-based secret sharing scheme introduced by Asmuth-Bloom in [A modular approach to key safeguarding](https://ieeexplore.ieee.org/abstract/document/1056651).
