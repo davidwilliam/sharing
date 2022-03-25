@@ -7,7 +7,7 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in secret_sharing.gemspec
 gemspec
 
-gem "hensel_code", "~> 0.3.0"
+gem "hensel_code", "~> 0.3.1"
 
 gem "prime", "~> 0.1.2"
 
