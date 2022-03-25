@@ -1,4 +1,4 @@
-# Secret Sharing
+# Sharing
 
 A secret sharing Ruby library.
 
