@@ -46,7 +46,7 @@ module Sharing
 
         def create_shares(secret)
           random_coefficients = generate_random_coefficients
-          (1..total_shares).map.with_index { |x, i| [i + 1, f(x, secret, random_coefficients) % p] }
+          (1..total_shares).map { |x| [x, f(x, secret, random_coefficients) % p] }
         end
 
         def reconstruct_secret(points)
