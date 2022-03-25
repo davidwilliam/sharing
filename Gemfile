@@ -4,12 +4,8 @@ ruby ">= 2.6.0"
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in secret_sharing.gemspec
+# Specify your gem"s dependencies in sharing.gemspec
 gemspec
-
-gem "hensel_code", "~> 0.3.1"
-
-gem "prime", "~> 0.1.2"
 
 gem "rake", "~> 13.0"
 
@@ -23,4 +19,6 @@ gem "rubocop-rake", "~> 0.6"
 
 gem "minitest-reporters", "~> 1.5"
 
-gem "codecov", require: false, group: :test
+gem "simplecov", "~>0.21", require: false
+
+gem "simplecov-console", "~>0.9", require: false
