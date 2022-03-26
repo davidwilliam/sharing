@@ -326,6 +326,19 @@ crtss.reconstruct_secret(selected_shares1_add_shares2_add_shares1_mul_shares2)
 
 and we can check that 5 + 8 = 13, 5 * 8 = 40, and 13 + 40 = 53.
 
+## Author
+
+David William Silva
+
+## Contributors
+
+David William Silva (Algemetric)
+Marcio Junior (Algemetric)
+
+## Acknowledgements
+
+Luke Harmon (Algemetric) and Gaetan Delavignette (Algemetric) have been instrumental by providing/conducting mathematical analyses, tests, and overall recommendations for improving the gem. 
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
