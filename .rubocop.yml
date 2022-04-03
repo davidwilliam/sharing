@@ -3,6 +3,7 @@ AllCops:
   TargetRubyVersion: 2.6
   Exclude:
     - 'lab/**/*'
+    - 'vendor/**/*'
 
 Style/StringLiterals:
   Enabled: true
