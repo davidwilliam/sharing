@@ -1,14 +1,15 @@
 # frozen_string_literal: true
 
 if ENV["COVERAGE"] == "on"
+  require "codecov"
   require "simplecov"
   require "simplecov-console"
-  require "codecov"
 
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
     [
       SimpleCov::Formatter::HTMLFormatter,
-      SimpleCov::Formatter::Console
+      SimpleCov::Formatter::Console,
+      SimpleCov::Formatter::Codecov
     ]
   )
 
