@@ -264,6 +264,90 @@ reconstructed_secret = sss.reconstruct_secret(selected_shares)
 
 Everything else works the sabe as before except the fact that only `3` shares are required to reconstruct the secret.
 
+### Division
+
+Here we simulate a division algorithm computed over the shares. Consider the following configuration:
+
+```ruby
+{:lambda_=>16, :total_shares=>6, :threshold=>3}
+sss = Sharing::Polynomial::Shamir::V1.new(params)
+```
+
+and the rational numbers
+
+```ruby
+rat1 = Rational(2, 3)
+rat2 = Rational(-5, 7)
+```
+
+We compute their Hensel code so we define our secrets:
+
+```ruby
+secret1 = HenselCode::TFPE.new(sss.p, 1, rat1).hensel_code
+# => 40896
+secret2 = HenselCode::TFPE.new(sss.p, 1, rat2).hensel_code
+# => 52579
+```
+
+We then comute the shares for each secret:
+
+```ruby
+shares1 = sss.create_shares(secret1)
+# => [[1, 22792], [2, 38518], [3, 26731], [4, 48774], [5, 43304], [6, 10321]]
+shares2 = sss.create_shares(secret2)
+# => [[1, 37982], [2, 294], [3, 858], [4, 39674], [5, 55399], [6, 48033]]
+```
+
+We select a subset of the shares of eacg secret based on the threshold:
+
+```ruby
+selected_shares1 = shares1.sample(sss.threshold)
+# => [[1, 22792], [5, 43304], [6, 10321]]
+selected_shares2 = shares2.sample(sss.threshold)
+# => [[6, 48033], [2, 294], [1, 37982]]
+```
+
+A party that is not one of the selected parties (a trusted party for instance) generates three random values that will later used:
+
+```ruby
+r1, r2, r3 = Sharing::Polynomial::Shamir::V1.generate_division_masking(sss.p)
+=> [23078, 18925, 18812]
+```
+
+Each party multiply their shares of the first operand by `r1` and the shares of the second operand by `r2`. For convenience (given our simulation), this step is here done all at once as follows:
+
+```ruby
+cs, ds = Sharing::Polynomial::Shamir::V1.compute_numerator_denominator(selected_shares1, selected_shares2, r1, r2, sss.p)
+=> [[[1, 38894], [5, 30899], [6, 54512]], [[6, 43951], [2, 43080], [1, 53419]]]
+```
+
+`cs` denote the shares representing the numerator of the division and `ds` represent the shares of the denominator of the division, as in `c/d`.
+
+Finally, in the reconstruction step, `c` and `d` are reconstructed and `r3` is used to invert the multiplication by `r1` and `r2` that was previously computed by the parties. With the correct values recovered, we compute the Hensel decoding and then we obtain the final result without revealing what the numerator and denominator were. For convenience, we execute these steps as follows:
+
+```ruby
+sss.reconstruct_division(cs, ds, r3)
+# => (-14/15)
+```
+
+We can also use only a subset of the shares:
+
+```ruby
+selected_cs = cs.sample(sss.threshold)
+=> [[5, 30899], [1, 38894], [6, 54512]]
+selected_ds = ds.sample(sss.threshold)
+# => [[2, 43080], [1, 53419], [6, 43951]]
+sss.reconstruct_division(selected_cs, selected_ds, r3)
+=> (-14/15)
+```
+
+And we can check that
+
+```ruby
+rat1 / rat2
+# => (-14/15)
+```
+
 ## Asmuth-Bloom V2
 
 The Asmuth-Bloom V2 was proposed by Ersoy et al. in in [Homomorphic extensions of CRT-based secret sharing](https://www.sciencedirect.com/science/article/pii/S0166218X20303012)). The reference is a CRT-based secret sharing scheme introduced by Asmuth-Bloom in [A modular approach to key safeguarding](https://ieeexplore.ieee.org/abstract/document/1056651).

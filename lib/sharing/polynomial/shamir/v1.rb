@@ -69,6 +69,18 @@ module Sharing
           (1..total_shares).map.with_index { |x, i| [i + 1, f(x, secret, random_coefficients) % prime] }
         end
 
+        def self.generate_division_masking(prime)
+          r1, r2 = random_distinct_numbers("integer", 2, prime.bit_length - 1)
+          r3 = (r2 * mod_inverse(r1, prime)) % prime
+          [r1, r2, r3]
+        end
+
+        def self.compute_numerator_denominator(shares1, shares2, r1_, r2_, prime)
+          cs = shares1.map { |i, share| [i, (share * r1_) % prime] }
+          ds = shares2.map { |i, share| [i, (share * r2_) % prime] }
+          [cs, ds]
+        end
+
         def initialize(params = {})
           @lambda_ = params[:lambda_]
           @total_shares = params[:total_shares]
@@ -91,6 +103,12 @@ module Sharing
           l0s = lagrange_basis_polynomial(xs)
           reconstructed_secret = l0s.zip(ys).map { |l, y| l * y }.sum % p
           encode_to_integer(reconstructed_secret)
+        end
+
+        def reconstruct_division(cs_, ds_, r3_)
+          c, d = [cs_, ds_].map { |shares| reconstruct_secret(shares) }
+          c_d_encoded = (c * mod_inverse(d, p) * r3_) % p
+          HenselCode::TruncatedFinitePadicExpansion.new(p, 1, c_d_encoded).to_r
         end
 
         private
